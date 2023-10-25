@@ -1,0 +1,10 @@
+(define (square x)
+  (* x x))
+
+(define (power b e)
+  (define (loop counter)
+    (cond ((= 0 counter) 1)
+	  ((even? counter) (square (loop (/ counter 2))))
+	  (else (* b (loop (- counter (if (negative? counter) -1 1)))))))
+  (if (negative? e) (/ 1 (loop e)) (loop e)))
+(power 2 1)

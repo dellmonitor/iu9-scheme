@@ -1,0 +1,12 @@
+(define (iterate f x n)
+  (define (loop counter prev)
+    (if (= counter n)
+      '()
+      (cons prev (loop (+ counter 1) (f prev)))))
+  (loop 0 x))
+
+(display (iterate (lambda (x) (* 2 x)) 1 6))
+(newline)
+(display (iterate (lambda (x) (* 2 x)) 1 1))
+(newline)
+(display (iterate (lambda (x) (* 2 x)) 1 0))

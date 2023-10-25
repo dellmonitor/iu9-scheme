@@ -1,0 +1,18 @@
+(define (o . fns)
+  (define (loop lst)
+    (if (null? lst)
+      (lambda (x) x)
+      (lambda (x) ((car lst) ((loop (cdr lst)) x)))))
+  (loop fns))
+
+(define (f x) (+ x 2))
+(define (g x) (* x 3))
+(define (h x) (- x))
+
+(display ((o f g h) 1))
+(newline)
+(display ((o f g) 1))
+(newline)
+(display ((o h) 1))
+(newline)
+(display ((o) 1))
