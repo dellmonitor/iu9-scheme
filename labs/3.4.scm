@@ -5,10 +5,10 @@
 
 (define (factorize polynomial)
   (let ((exponent (car (cdr (cdr (car (cdr polynomial))))))
-	(operand (car polynomial))
+	(operator (car polynomial))
 	(a (car (cdr (car (cdr polynomial)))))
 	(b (car (cdr (car (cdr (cdr polynomial)))))))
-    (if (equal? operand '-)
+    (if (equal? operator '-)
       (if (equal? exponent 2)
 	`(* (- ,a ,b)
 	    (+ ,a ,b))
