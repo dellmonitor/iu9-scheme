@@ -1,0 +1,16 @@
+(define (save-data data path)
+  (call-with-output-file path (lambda (port) (display data port))))
+
+(define (load-data path)
+  (call-with-input-file path (lambda (port) (read port))))
+
+(define (count-lines path)
+  (with-input-from-file path (lambda ()
+			       (let loop ((counter 0))
+				 (let ((current (read-char)))
+				   (cond ((eof-object? current) counter)
+					 ((and (not (equal? current #\newline))
+					       (or (eof-object? (peek-char))
+						   (equal? (peek-char) #\newline)))
+					  (loop (+ counter 1)))
+				       (else (loop counter))))))))
