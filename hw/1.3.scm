@@ -1,6 +1,6 @@
 (define (my-gcd a b)
   (if (= b 0)
-    a
+    (abs a)
     (my-gcd b (remainder a b))))
 
 (define (my-lcm a b)
