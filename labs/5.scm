@@ -2,95 +2,96 @@
 
 
 (define (interpret program stack)
+
   (define standard-dictionary
     (list 'drop 'swap 'dup 'over 'rot 'depth '+ '- '* '/ 'mod 'neg '= '> '< 'not 'and 'or))
 
-  (define (drop stack)
+  (define (drop stack) ; Удаляет элемент на вершине стека. (n1) → ()
     (cdr stack))
 
-  (define (swap stack)
+  (define (swap stack) ; Меняет местами два элемента на вершине стека. (n2 n1) → (n1 n2)
     (cons (car (cdr stack))
           (cons (car stack)
                 (cdr (cdr stack)))))
 
-  (define (dup stack)
+  (define (dup stack) ; Дублирует элемент на вершине стека. (n1) → (n1 n1)
     (cons (car stack) stack))
 
-  (define (over stack)
+  (define (over stack) ; Копирует предпоследний элемент на вершину стека. (n2 n1) → (n1 n2 n1)
     (cons (car (cdr stack))
           stack))
 
-  (define (rot stack)
+  (define (rot stack) ; Меняет местами первый и третий элемент от головы стека. (n3 n2 n1) → (n1 n2 n3)
     (cons (car (cdr (cdr stack)))
           (cons (car (cdr stack))
                 (cons (car stack)
                       (cdr (cdr (cdr stack)))))))
 
-  (define (depth stack)
+  (define (depth stack) ; Возвращает число элементов в стеке перед своим вызовом. (...) → (n ...)
     (cons (length stack) stack))
 
-  (define (add stack)
+  (define (add stack) ; Сумма n1 и n2. (n2 n1) → (сумма)
     (cons (+ (car (cdr stack))
 	     (car stack))
 	  (cdr (cdr stack))))
 
-  (define (subtract stack)
+  (define (subtract stack) ; Разность: n1 − n2. (n2 n1) → (разность)
     (cons (- (car (cdr stack))
 	     (car stack))
 	  (cdr (cdr stack))))
 
-  (define (multiply stack)
+  (define (multiply stack) ; Произведение n1 на n2. (n2 n1) → (произведение)
     (cons (* (car (cdr stack))
 	     (car stack))
 	  (cdr (cdr stack))))
 
-  (define (divide stack)
+  (define (divide stack) ; Целочисленное деление n1 на n2. (n2 n1) → (частное)
     (cons (/ (car (cdr stack))
 	     (car stack))
 	  (cdr (cdr stack))))
 
-  (define (mod stack)
+  (define (mod stack) ; Остаток от деления n1 на n2. (n2 n1) → (остаток)
     (cons (modulo (car (cdr stack))
 		  (car stack))
 	  (cdr (cdr stack))))
 
-  (define (neg stack)
+  (define (neg stack) ; Смена знака числа. (n) → (−n)
     (cons (- (car stack))
 	  (cdr stack)))
   
-  (define (equal stack)
+  (define (equal stack) ; Флаг равен −1, если n1 = n2, иначе флаг равен 0. (n2 n1) → (флаг)
     (cons (if (= (car (cdr stack))
 		 (car stack))
 	    -1
 	    0)
 	  (cdr (cdr stack))))
 
-  (define (greater stack)
+  (define (greater stack) ; Флаг равен −1, если n1 > n2, иначе флаг равен 0. (n2 n1)
     (cons (if (> (car (cdr stack))
 		 (car stack))
 	    -1
 	    0)
 	  (cdr (cdr stack))))
 
-  (define (less stack)
+  (define (less stack) ; Флаг равен −1, если n1 < n2, иначе флаг равен 0. (n2 n1)
     (cons (if (< (car (cdr stack))
 		 (car stack))
 	    -1
 	    0)
 	  (cdr (cdr stack))))
 
-  (define (forth-not stack)
+  (define (forth-not stack) ; НЕ n. (n) → (результат)
     (cons (if (= (car stack) 0) -1 0)
 	  (cdr stack)))
 
-  (define (forth-and stack)
+  (define (forth-and stack) ; n2 И n1. (n2 n1) → (результат)
     (cons (if (and (not (= (car (cdr stack)) 0))
 		   (not (= (car stack) 0)))
 	    -1
 	    0)
 	  (cdr (cdr stack))))
 
-  (define (forth-or stack)
+  (define (forth-or stack) ; n2 ИЛИ n1. (n2 n1) → (результат)
     (cons (if (or (not (= (car (cdr stack)) 0))
 		  (not (= (car stack) 0)))
 	    -1
@@ -121,7 +122,7 @@
 
   (define (state words word-counter data-stack call-stack dictionary current-action)
     (if (not (equal? (vector-length words) word-counter))
-        (cond ((and (equal? (vector-ref words word-counter) 'define)
+        (cond ((and (equal? (vector-ref words word-counter) 'define) ; Начинает словарную статью
 		    (not (equal? current-action 'ignore-consequent)))
 	       (state words
 		      (+ word-counter 2)
@@ -129,16 +130,16 @@
 		      call-stack
 		      (cons (cons (vector-ref words (+ word-counter 1)) (cons (+ word-counter 2) '())) dictionary)
 		      'read-definition))
-	      ((equal? current-action 'read-definition)
+	      ((equal? current-action 'read-definition) ; Читает статью, но не выполняет
 	       (state words
 		      (+ word-counter 1)
 		      data-stack
 		      call-stack
 		      dictionary
 		      (if (equal? (vector-ref words word-counter) 'end)
-			'run-main
-			'read-definition)))
-	      ((and (or (equal? (vector-ref words word-counter) 'end)
+			'run-main ; Если дошел до конца статьи, продолжает выполнять программу
+			'read-definition))) ; Иначе продолжает читать
+	      ((and (or (equal? (vector-ref words word-counter) 'end) ; Если выполнил код в статье, возвращается к месту вызова и продолжает выполнять программу
 			(equal? (vector-ref words word-counter) 'exit))
 		    (not (equal? current-action 'ignore-consequent)))
 	       (state words
@@ -170,21 +171,21 @@
 		      call-stack
 		      dictionary
 		      'ignore-consequent))
-	      ((number? (vector-ref words word-counter))
+	      ((number? (vector-ref words word-counter)) ; Записывает число в стек
                (state words
                       (+ word-counter 1)
                       (cons (vector-ref words word-counter) data-stack)
                       call-stack
                       dictionary
 		      current-action))
-              ((member (vector-ref words word-counter) standard-dictionary)
+              ((member (vector-ref words word-counter) standard-dictionary) ; Если дали встроенное слово, выполняет операцию над стеком
                (state words
                       (+ word-counter 1)
                       ((standard-procedure (vector-ref words word-counter)) data-stack)
                       call-stack
                       dictionary
 		      current-action))
-	      ((assoc (vector-ref words word-counter) dictionary)
+	      ((assoc (vector-ref words word-counter) dictionary) ; Если дали определнное слово, выполнит код в определении
 	       (state words
 		      (car (cdr (assoc (vector-ref words word-counter) dictionary)))
 		      data-stack
@@ -244,6 +245,8 @@
 	(test (interpret #(define =0? dup 0 = end define gcd =0? if drop exit endif swap over mod gcd end 90 99 gcd 234 8100 gcd) '()) (18 9))
 	(test (interpret #(define a 2 dup end a) '(-1 1)) (2 2 -1 1))
 	(test (interpret #(1 if define a 3 end endif a) '()) (3))
+	(test (interpret #(0 if define a 3 end endif define a 2 end a) '()) (2))
+	; (test (interpret #(define a 0 if end endif 3 end a) '()) (3))
         ))
 
 (run-tests the-tests)
