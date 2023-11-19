@@ -3,7 +3,7 @@
 
 (define (interpret program stack)
   (define standard-dictionary
-    (list 'drop 'swap 'dup 'over 'rot 'depth '+ '- '* '/ 'mod 'neg))
+    (list 'drop 'swap 'dup 'over 'rot 'depth '+ '- '* '/ 'mod 'neg '= '> '<))
 
   (define (drop stack)
     (cdr stack))
@@ -57,6 +57,27 @@
   (define (neg stack)
     (cons (- (car stack))
 	  (cdr stack)))
+  
+  (define (equal stack)
+    (cons (if (= (car (cdr stack))
+		 (car stack))
+	    -1
+	    0)
+	  (cdr (cdr stack))))
+
+  (define (greater stack)
+    (cons (if (> (car (cdr stack))
+		 (car stack))
+	    -1
+	    0)
+	  (cdr (cdr stack))))
+
+  (define (less stack)
+    (cons (if (< (car (cdr stack))
+		 (car stack))
+	    -1
+	    0)
+	  (cdr (cdr stack))))
 
   (define (standard-procedure procedure)
     (case procedure
@@ -72,6 +93,9 @@
       ('/ divide)
       ('mod mod)
       ('neg neg)
+      ('= equal)
+      ('> greater)
+      ('< less)
       ))
 
   (define (state words word-counter data-stack call-stack dictionary)
@@ -114,6 +138,12 @@
 	(test (interpret #(/) '(2 6)) (3))
 	(test (interpret #(mod) '(7 9)) (2))
 	(test (interpret #(neg) '(1)) (-1))
+	(test (interpret #(=) '(2 2)) (-1))
+	(test (interpret #(=) '(2 3)) (0))
+	(test (interpret #(>) '(1 2)) (-1))
+	(test (interpret #(>) '(3 2)) (0))
+	(test (interpret #(<) '(2 1)) (-1))
+	(test (interpret #(<) '(1 2)) (0))
         ))
 
 (run-tests the-tests)
