@@ -3,7 +3,7 @@
 
 (define (interpret program stack)
   (define standard-dictionary
-    (list 'drop 'swap 'dup 'over 'rot 'depth '+ '- '* '/ 'mod 'neg '= '> '<))
+    (list 'drop 'swap 'dup 'over 'rot 'depth '+ '- '* '/ 'mod 'neg '= '> '< 'not 'and 'or))
 
   (define (drop stack)
     (cdr stack))
@@ -79,6 +79,24 @@
 	    0)
 	  (cdr (cdr stack))))
 
+  (define (forth-not stack)
+    (cons (if (= (car stack) 0) -1 0)
+	  (cdr stack)))
+
+  (define (forth-and stack)
+    (cons (if (and (not (= (car (cdr stack)) 0))
+		   (not (= (car stack) 0)))
+	    -1
+	    0)
+	  (cdr (cdr stack))))
+
+  (define (forth-or stack)
+    (cons (if (or (not (= (car (cdr stack)) 0))
+		  (not (= (car stack) 0)))
+	    -1
+	    0)
+	  (cdr (cdr stack))))
+
   (define (standard-procedure procedure)
     (case procedure
       ('drop drop)
@@ -96,6 +114,9 @@
       ('= equal)
       ('> greater)
       ('< less)
+      ('not forth-not)
+      ('and forth-and)
+      ('or forth-or)
       ))
 
   (define (state words word-counter data-stack call-stack dictionary)
@@ -144,6 +165,17 @@
 	(test (interpret #(>) '(3 2)) (0))
 	(test (interpret #(<) '(2 1)) (-1))
 	(test (interpret #(<) '(1 2)) (0))
+	(test (interpret #(not) '(0)) (-1))
+	(test (interpret #(not) '(2)) (0))
+	(test (interpret #(not) '(-2)) (0))
+	(test (interpret #(and) '(0 0)) (0))
+	(test (interpret #(and) '(1 0)) (0))
+	(test (interpret #(and) '(0 1)) (0))
+	(test (interpret #(and) '(-1 1)) (-1))
+	(test (interpret #(or) '(0 0)) (0))
+	(test (interpret #(or) '(1 0)) (-1))
+	(test (interpret #(or) '(0 -1)) (-1))
+	(test (interpret #(or) '(-1 1)) (-1))
         ))
 
 (run-tests the-tests)
