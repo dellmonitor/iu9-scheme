@@ -121,6 +121,15 @@
       ))
 
   (define (state words word-counter data-stack call-stack dictionary current-action)
+    ; Отладка
+    ; (write word-counter)
+    ; (display " " )
+    ; (if (not (equal? (vector-length words) word-counter)) (write (vector-ref words word-counter)))
+    ; (write data-stack)
+    ; (write call-stack)
+    ; (write dictionary)
+    ; (write current-action)
+    ; (newline)
     (if (not (equal? (vector-length words) word-counter))
         (cond ((and (equal? (vector-ref words word-counter) 'define) ; Начинает словарную статью
 		    (not (equal? current-action 'ignore-consequent)))
