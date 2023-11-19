@@ -119,26 +119,85 @@
       ('or forth-or)
       ))
 
-  (define (state words word-counter data-stack call-stack dictionary)
+  (define (state words word-counter data-stack call-stack dictionary current-action)
     (if (not (equal? (vector-length words) word-counter))
-        (cond ((number? (vector-ref words word-counter))
+        (cond ((and (equal? (vector-ref words word-counter) 'define)
+		    (not (equal? current-action 'ignore-consequent)))
+	       (state words
+		      (+ word-counter 2)
+		      data-stack
+		      call-stack
+		      (cons (cons (vector-ref words (+ word-counter 1)) (cons (+ word-counter 2) '())) dictionary)
+		      'read-definition))
+	      ((equal? current-action 'read-definition)
+	       (state words
+		      (+ word-counter 1)
+		      data-stack
+		      call-stack
+		      dictionary
+		      (if (equal? (vector-ref words word-counter) 'end)
+			'run-main
+			'read-definition)))
+	      ((and (or (equal? (vector-ref words word-counter) 'end)
+			(equal? (vector-ref words word-counter) 'exit))
+		    (not (equal? current-action 'ignore-consequent)))
+	       (state words
+		      (car call-stack)
+		      data-stack
+		      (cdr call-stack)
+		      dictionary
+		      'run-main))
+	      ((equal? (vector-ref words word-counter) 'if)
+	       (state words
+		      (+ word-counter 1)
+		      (cdr data-stack)
+		      call-stack
+		      dictionary
+		      (if (not (equal? (car data-stack) 0))
+			'run-main
+			'ignore-consequent)))
+	      ((equal? (vector-ref words word-counter) 'endif)
+	       (state words
+		      (+ word-counter 1)
+		      data-stack
+		      call-stack
+		      dictionary
+		      'run-main))
+	      ((equal? current-action 'ignore-consequent)
+	       (state words
+		      (+ word-counter 1)
+		      data-stack
+		      call-stack
+		      dictionary
+		      'ignore-consequent))
+	      ((number? (vector-ref words word-counter))
                (state words
                       (+ word-counter 1)
                       (cons (vector-ref words word-counter) data-stack)
                       call-stack
-                      dictionary))
+                      dictionary
+		      current-action))
               ((member (vector-ref words word-counter) standard-dictionary)
                (state words
                       (+ word-counter 1)
                       ((standard-procedure (vector-ref words word-counter)) data-stack)
                       call-stack
-                      dictionary))
+                      dictionary
+		      current-action))
+	      ((assoc (vector-ref words word-counter) dictionary)
+	       (state words
+		      (car (cdr (assoc (vector-ref words word-counter) dictionary)))
+		      data-stack
+		      (cons (+ word-counter 1) call-stack)
+		      dictionary
+		      'run-main))
               )
         data-stack))
-  (state program 0 stack '() '()))
+  (state program 0 stack '() '() 'run-main))
 
 (define the-tests
-  (list (test (interpret #() '()) ())
+  (list 
+	(test (interpret #() '()) ())
         (test (interpret #(1) '()) (1))
         (test (interpret #(1 2) '()) (2 1))
         (test (interpret #() '(1)) (1))
@@ -176,6 +235,15 @@
 	(test (interpret #(or) '(1 0)) (-1))
 	(test (interpret #(or) '(0 -1)) (-1))
 	(test (interpret #(or) '(-1 1)) (-1))
+	(test (interpret #(if 1 endif) '(1)) (1))
+	(test (interpret #(define -- 1 - end 5 -- --) '()) (3))
+	(test (interpret #(define abs dup 0 < if neg endif end 9 abs -9 abs) '()) (9 9))
+	(test (interpret #(define =0? dup 0 = end define <0? dup 0 < end define signum =0? if exit endif <0? if drop -1 exit endif drop 1 end 0 signum -5 signum 10 signum) '()) (1 -1 0))
+	(test (interpret #(define -- 1 - end define =0? dup 0 = end define =1? dup 1 = end define factorial =0? if drop 1 exit endif =1? if drop 1 exit endif dup -- factorial * end 0 factorial 1 factorial 2 factorial 3 factorial 4 factorial) '()) (24 6 2 1 1))
+	(test (interpret #(define =0? dup 0 = end define =1? dup 1 = end define -- 1 - end define fib =0? if drop 0 exit endif =1? if drop 1 exit endif -- dup -- fib swap fib + end define make-fib dup 0 < if drop exit endif dup fib swap -- make-fib end 10 make-fib) '()) (0 1 1 2 3 5 8 13 21 34 55))
+	(test (interpret #(define =0? dup 0 = end define gcd =0? if drop exit endif swap over mod gcd end 90 99 gcd 234 8100 gcd) '()) (18 9))
+	(test (interpret #(define a 2 dup end a) '(-1 1)) (2 2 -1 1))
+	(test (interpret #(1 if define a 3 end endif a) '()) (3))
         ))
 
 (run-tests the-tests)
