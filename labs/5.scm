@@ -3,7 +3,7 @@
 
 (define (interpret program stack)
   (define standard-dictionary
-    (list 'drop 'swap 'dup 'over 'rot 'depth))
+    (list 'drop 'swap 'dup 'over 'rot 'depth '+ '- '* '/ 'mod 'neg))
 
   (define (drop stack)
     (cdr stack))
@@ -29,6 +29,35 @@
   (define (depth stack)
     (cons (length stack) stack))
 
+  (define (add stack)
+    (cons (+ (car (cdr stack))
+	     (car stack))
+	  (cdr (cdr stack))))
+
+  (define (subtract stack)
+    (cons (- (car (cdr stack))
+	     (car stack))
+	  (cdr (cdr stack))))
+
+  (define (multiply stack)
+    (cons (* (car (cdr stack))
+	     (car stack))
+	  (cdr (cdr stack))))
+
+  (define (divide stack)
+    (cons (/ (car (cdr stack))
+	     (car stack))
+	  (cdr (cdr stack))))
+
+  (define (mod stack)
+    (cons (modulo (car (cdr stack))
+		  (car stack))
+	  (cdr (cdr stack))))
+
+  (define (neg stack)
+    (cons (- (car stack))
+	  (cdr stack)))
+
   (define (standard-procedure procedure)
     (case procedure
       ('drop drop)
@@ -37,6 +66,12 @@
       ('over over)
       ('rot rot)
       ('depth depth)
+      ('+ add)
+      ('- subtract)
+      ('* multiply)
+      ('/ divide)
+      ('mod mod)
+      ('neg neg)
       ))
 
   (define (state words word-counter data-stack call-stack dictionary)
@@ -73,6 +108,12 @@
 	(test (interpret #(over) '(1 2)) (2 1 2))
 	(test (interpret #(rot) '(1 2 3)) (3 2 1))
 	(test (interpret #(depth) '(1 3)) (2 1 3))
+	(test (interpret #(+) '(2 1)) (3))
+	(test (interpret #(-) '(2 1)) (-1))
+	(test (interpret #(*) '(2 3)) (6))
+	(test (interpret #(/) '(2 6)) (3))
+	(test (interpret #(mod) '(7 9)) (2))
+	(test (interpret #(neg) '(1)) (-1))
         ))
 
 (run-tests the-tests)
