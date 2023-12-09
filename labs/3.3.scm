@@ -34,8 +34,6 @@
 	   (let* ((index (car args))
 		  (elem (car (cdr args)))
 		  (type-of-elem (type elem)))
-	     (write index)
-	     (write lst-len)
 	     (and (or (equal? type-of-seq 'list)
 		      (equal? type-of-seq 'vector)
 		      (equal? (type (car lst)) type-of-elem)) 
