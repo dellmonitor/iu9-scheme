@@ -39,19 +39,19 @@
 
 (define (body stream error)
   (cond ((if? (peek stream))
-	 (list (cons (next stream)
-	       (cons (body stream error)
-		     (cond ((endif? (peek stream))
-			    (next stream)
-			    (body stream error))
-			   (else (error #f)))))))
-	((integer? (peek stream))
-	 (cons (next stream)
-	       (body stream error)))
-	((word? (peek stream))
-	 (cons (next stream)
-	       (body stream error)))
-	(else '())))
+         (cons (cons (next stream)
+                     (list (body stream error)))
+               (cond ((endif? (peek stream))
+                      (next stream)
+                      (body stream error))
+                     (else (error #f)))))
+        ((integer? (peek stream))
+         (cons (next stream)
+               (body stream error)))
+        ((word? (peek stream))
+         (cons (next stream)
+               (body stream error)))
+        (else '())))
 
 (define (define? token)
   (equal? token 'define))
@@ -70,3 +70,30 @@
        (case token
 	 ((define end if endif #\©) #f)
 	 (else #t))))
+
+(define the-tests
+  (list
+    (test (parse #(1 2 +)) (() (1 2 +)))
+    (test (parse #(x dup 0 swap if drop -1 endif 6 7)) (() (x dup 0 swap (if (drop -1)) 6 7)))
+    (test (parse #( define -- 1 - end
+          define =0? dup 0 = end
+          define =1? dup 1 = end
+          define factorial
+              =0? if drop 1 exit endif
+              =1? if drop 1 exit endif
+              dup --
+              factorial
+              *
+          end
+          0 factorial
+          1 factorial
+          2 factorial
+          3 factorial
+          4 factorial )) (((-- (1 -))
+   (=0? (dup 0 =))
+   (=1? (dup 1 =))
+   (factorial
+    (=0? (if (drop 1 exit)) =1? (if (drop 1 exit)) dup -- factorial *)))
+  (0 factorial 1 factorial 2 factorial 3 factorial 4 factorial)))
+    ))
+(run-tests the-tests)
